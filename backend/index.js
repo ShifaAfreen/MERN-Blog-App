@@ -108,7 +108,7 @@ mongoose.connect(mongoUrl)
     await newImage.save();
   
     const { token } = req.cookies;
-    jwt.verify(token, secret, {}, async (err, info) => {
+    jwt.verify(token, secret, {}, (err, info) => {
       if (err) throw err;
   
       const { title, summary, content } = req.body;
