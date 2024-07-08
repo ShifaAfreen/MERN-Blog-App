@@ -62,27 +62,33 @@ app.post('/register', async (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const userDoc = await User.findOne({ username });
-    if (!userDoc) return res.status(400).json('User not found');
+    const { username, password } = req.body;
+    try {
+        const userDoc = await User.findOne({ username });
+        if (!userDoc) return res.status(400).json('User not found');
 
-    const passOk = bcrypt.compareSync(password, userDoc.password);
-    if (passOk) {
-      jwt.sign({ username, id: userDoc._id }, jwtSecret, { expiresIn: '1h' }, (err, token) => {
-        if (err) throw err;
-        res.cookie('token', token, { httpOnly: true }).json({
-          id: userDoc._id,
-          username,
-        });
-      });
-    } else {
-      res.status(400).json('Wrong credentials');
+        const passOk = bcrypt.compareSync(password, userDoc.password);
+        if (passOk) {
+            jwt.sign({ username, id: userDoc._id }, secret, { expiresIn: '1h' }, (err, token) => {
+                if (err) throw err;
+                res.cookie('token', token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'None',
+                    domain: '.onrender.com',  // Ensure domain is set for cross-domain cookies
+                }).json({
+                    id: userDoc._id,
+                    username,
+                });
+            });
+        } else {
+            res.status(400).json('Wrong credentials');
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 });
+
 
 app.post('/logout', (req, res) => {
   res.cookie('token', '', { httpOnly: true }).json('Logged out');
